@@ -377,6 +377,7 @@ class Monstres(Histoire):
         self.att_monstre = pygame.image.load(resource_path("Assets/Image/Particule attaque slime.png"))
         self.monstre_gauche = pygame.image.load(resource_path("Assets/Image/Monstre gauche.png"))
         self.monstre_droite = pygame.image.load(resource_path("Assets/Image/Monstre droite.png"))
+        self.ame_monstre = pygame.image.load(resource_path("Assets/Image/Ame monstre.png")
         self.monstre = self.monstre_droite
 
         self.coord_gauche = None
@@ -390,6 +391,7 @@ class Monstres(Histoire):
         self.direction_att = 0
         self.degat_frame_debug = 0
         self.coldown_attaque_joueur = 0
+        self.ame_collecte = 0
 
         self.vie_monstre = [100, 100, 100, 100, 100, 100]
         self.monstre_dead = []
@@ -545,6 +547,9 @@ class Monstres(Histoire):
                     del self.vie_monstre[x]
                     del self.positions_mob_x[x]
                     del self.positions_mob_y[x]
+                    self.ame_collecte += 1
+                    self.canvas.blit(self.ame_monstre(700, 600))
+                    self.monstre_dead[self.ame_collecte]
                     break
 
 
