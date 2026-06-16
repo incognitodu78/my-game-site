@@ -548,8 +548,8 @@ class Monstres(Histoire):
                     del self.positions_mob_x[x]
                     del self.positions_mob_y[x]
                     self.ame_collecte += 1
-                    self.canvas.blit(self.ame_monstre(700, 600))
-                    self.monstre_dead[self.ame_collecte]
+                    self.canvas.blit(self.ame_monstre, (700, 600))
+                    self.monstre_dead.append(self.ame_collecte)
                     break
 
 
