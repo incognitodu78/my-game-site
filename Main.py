@@ -377,7 +377,7 @@ class Monstres(Histoire):
         self.att_monstre = pygame.image.load(resource_path("Assets/Image/Particule attaque slime.png"))
         self.monstre_gauche = pygame.image.load(resource_path("Assets/Image/Monstre gauche.png"))
         self.monstre_droite = pygame.image.load(resource_path("Assets/Image/Monstre droite.png"))
-        self.ame_monstre = pygame.image.load(resource_path("Assets/Image/Ame monstre.png")
+        self.ame_monstre = pygame.image.load(resource_path("Assets/Image/Ame monstre.png"))
         self.monstre = self.monstre_droite
 
         self.coord_gauche = None
