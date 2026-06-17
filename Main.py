@@ -20,7 +20,13 @@ class Jeu:
         pygame.display.set_caption("Cursed village")
         pygame.display.set_icon(pygame.image.load(resource_path("Assets/Image/Icone.png")))
 
+        pygame.mixer.init()
+        pygame.mixer.music.load(resource_path("Assets/Sons/Ap musique.mp3"))
+        pygame.mixer.music.set_volume(0.2)
+        pygame.mixer.music.play(-1)
+
         self.reboot = False
+        self.gagner = False
 
         self.dev = True
         self.enjeu = False
@@ -57,6 +63,7 @@ class Jeu:
         self.btn_azerty = pygame.image.load(resource_path("Assets/Image/Bouton azerty.png"))
         self.btn_qwerty = pygame.image.load(resource_path("Assets/Image/Bouton qwerty.png"))
         self.case_princip = pygame.image.load(resource_path("Assets/Image/Case principale.png"))
+        self.case_util = pygame.image.load(resource_path("Assets/Image/Case utilisé.png"))
         self.joueur_devant = pygame.image.load(resource_path("Assets/Image/Personnage principale devant.png"))
         self.joueur_derriere = pygame.image.load(resource_path("Assets/Image/Personnage principale derrière.png"))
         self.joueur_gauche = pygame.image.load(resource_path("Assets/Image/Personnage principale gauche.png"))
@@ -64,6 +71,12 @@ class Jeu:
         self.pnj = pygame.image.load(resource_path("Assets/Image/PNJ 1.png"))
         self.btn_quitter = pygame.image.load(resource_path("Assets/Image/Bouton quitter.png"))
         self.btn_continuer = pygame.image.load(resource_path("Assets/Image/Bouton continuer.png"))
+
+        self.son_degat_joueur = pygame.mixer.Sound(resource_path("Assets/Sons/pv joueur.wav"))
+        self.son_gagnant = pygame.mixer.Sound(resource_path("Assets/Sons/winner.wav"))
+        self.son_monstre_dead = pygame.mixer.Sound(resource_path("Assets/Sons/kill slime.wav"))
+        self.son_game_over = pygame.mixer.Sound(resource_path("Assets/Sons/Game over.wav"))
+        self.son_attaque_joueur = pygame.mixer.Sound(resource_path("Assets/Sons/attaque joueur.wav"))
 
         self.joueur = self.joueur_derriere
 
@@ -117,7 +130,8 @@ class Jeu:
                 if self.btn_quitter_oui_hitbox.collidepoint(event.pos):
                     self.arret_en_court = True
                 elif self.btn_quitter_non_hitbox.collidepoint(event.pos):
-                    self.reboot = True
+                    pass
+                    # self.reboot = True    // activer ceci pour activer l'option de reset
 
             return
 
@@ -277,7 +291,7 @@ class Jeu:
                     pygame.time.wait(200)
 
                 if self.keys[pygame.K_x]:
-                    self.vie_joueur = 999999
+                    self.vie_joueur = 100
 
     def loot(self):
         data = pygame.font.Font(None, 45)
@@ -288,7 +302,7 @@ class Jeu:
             self.canvas.blit(self.case_princip, (1150, 600))
             self.canvas.blit(self.case_princip, (1000, 600))
             self.canvas.blit(self.case_princip, (850, 600))
-            self.canvas.blit(self.case_princip, (700, 600))
+            self.canvas.blit(self.case_util, (700, 600))
 
             self.canvas.fill((0, 0, 0), (70, 605, 510, 60))
             self.canvas.fill((255,0,0), (75,610,self.vie_joueur * 5,50))
@@ -305,16 +319,24 @@ class Jeu:
 
     def game_over(self):
         data = pygame.font.Font(None, 100)
-        text = data.render("GAME OVER", True, (255,255,255))
+        texte = data.render("GAME OVER", True, (255,255,255))
         if self.vie_joueur <= 0:
             self.enjeu = False
             self.canvas.fill((0,0,0))
-            self.canvas.blit(text, (400, 150))
+            self.canvas.blit(texte, (400, 150))
             self.canvas.blit(self.btn_quitter, (400, 300))
             self.canvas.blit(self.btn_continuer, (650, 300))
+            if not self.reset:
+                self.son_game_over.play()
             self.reset = True
 
-
+    def winner(self):
+        if self.enjeu and not self.quitter and self.gagner:
+            data = pygame.font.Font(None, 300)
+            text = data.render("YOU WIN!", True, (255,255,255))
+            self.canvas.blit(text, (140, 290))
+            self.son_gagnant.play()
+            self.enjeu = False
 
 
 
@@ -325,7 +347,9 @@ class Histoire(Jeu):
         self.info_texte = "Salutation voyageur"
         self.level_hist = 0
         self.hist_att = False
-
+        self.fin_debut_hist = False
+        self.hist_fin = False
+        self.discution_pnj = False
         self.ap_indic = pygame.image.load(resource_path("Assets/Image/Ap_indic.png"))
         self.ap_texte = pygame.image.load(resource_path("Assets/Image/Ap_texte.png"))
 
@@ -343,9 +367,10 @@ class Histoire(Jeu):
                 self.canvas.blit(self.ap_indic, (975, 20))
 
                 if self.keys[pygame.K_RETURN] and not self.histoire_start:
+                    self.discution_pnj = True
                     self.histoire_start = True
 
-            if self.histoire_start:
+            if self.histoire_start and not self.hist_fin:
                 texte2 = police_ecriture.render(self.info_texte, True, (255, 255, 255))
                 texte1 = police_ecriture2.render(self.choix_lettre, True, (255,255,255))
                 self.canvas.blit(self.ap_texte, (45, 500))
@@ -369,6 +394,12 @@ class Histoire(Jeu):
                     self.histoire_start = False
                     self.hist_att = True
                     self.level_hist = 0
+                    self.fin_debut_hist = True
+                    self.discution_pnj = False
+
+            elif self.hist_fin:
+                if self.discution_pnj:
+                    self.gagner = True
 
 class Monstres(Histoire):
     def __init__(self):
@@ -378,6 +409,7 @@ class Monstres(Histoire):
         self.monstre_gauche = pygame.image.load(resource_path("Assets/Image/Monstre gauche.png"))
         self.monstre_droite = pygame.image.load(resource_path("Assets/Image/Monstre droite.png"))
         self.ame_monstre = pygame.image.load(resource_path("Assets/Image/Ame monstre.png"))
+        self.arme = pygame.image.load(resource_path("Assets/Image/épée.png"))
         self.monstre = self.monstre_droite
 
         self.coord_gauche = None
@@ -499,18 +531,26 @@ class Monstres(Histoire):
                         if self.hitbox_joueur.colliderect(hitbox):
                             self.vie_joueur -= 30
                             self.degat_frame_debug = 0
+                            if not self.reset:
+                                self.son_degat_joueur.play()
                             break
                         if self.hitbox_joueur.colliderect(hitbox):
                             self.vie_joueur -= 30
                             self.degat_frame_debug = 0
+                            if not self.reset:
+                                self.son_degat_joueur.play()
                             break
                         if self.hitbox_joueur.colliderect(hitbox):
                             self.vie_joueur -= 30
                             self.degat_frame_debug = 0
+                            if not self.reset:
+                                self.son_degat_joueur.play()
                             break
                         if self.hitbox_joueur.colliderect(hitbox):
                             self.vie_joueur -= 30
                             self.degat_frame_debug = 0
+                            if not self.reset:
+                                self.son_degat_joueur.play()
                             break
 
     def attaque_joueur(self):
@@ -542,15 +582,42 @@ class Monstres(Histoire):
                     if self.keys[pygame.K_e]:
                         if self.coldown_attaque_joueur >= 0.5:
                             self.vie_monstre[x] -= 20
+                            self.son_attaque_joueur.play()
                             self.coldown_attaque_joueur = 0
                 if self.vie_monstre[x] <= 0:
                     del self.vie_monstre[x]
                     del self.positions_mob_x[x]
                     del self.positions_mob_y[x]
                     self.ame_collecte += 1
-                    self.canvas.blit(self.ame_monstre, (700, 600))
+                    self.son_monstre_dead.play()
                     self.monstre_dead.append(self.ame_collecte)
                     break
+
+    def ame_collector(self):
+        arme = pygame.transform.smoothscale(self.arme, (20, 20))
+        arme_inverse_x = pygame.transform.flip(arme, True, False)
+        arme_inverse_y = pygame.transform.flip(arme, False, True)
+        chiffre = len(self.monstre_dead)
+        data = pygame.font.Font(None, 35)
+        text = data.render(str(chiffre), False, (0, 0, 0))
+        if self.enjeu and not self.quitter and not self.gagner:
+            if len(self.monstre_dead) > 0:
+                self.canvas.blit(self.ame_monstre, (855, 600))
+                self.canvas.blit(text, (910, 650))
+
+            if self.ame_collecte >= 5:
+                self.hist_fin = True
+
+            if self.fin_debut_hist and not self.gagner:
+                self.canvas.blit(self.arme, (715, 610))
+                if self.joueur == self.joueur_droite:
+                    self.canvas.blit(arme, (620, 420))
+                if self.joueur == self.joueur_gauche:
+                    self.canvas.blit(arme_inverse_x, (585, 420))
+                if self.joueur == self.joueur_devant:
+                    self.canvas.blit(arme_inverse_y, (605, 430))
+                if self.joueur == self.joueur_derriere:
+                    self.canvas.blit(arme, (640, 415))
 
 
     def reset_world(self):
@@ -574,7 +641,6 @@ class Monstres(Histoire):
 
         self.positions_bat_x = [2200, 1450, 1650, 2150, 2400, 1700]
         self.positions_bat_y = [2000, 1800, 1500, 1700, 1800, 2000]
-
 
         self.choix_lettre = "Press '->' to continue"
         self.info_texte = "Salutation voyageur"
@@ -610,13 +676,16 @@ while running:
     jeu.afficher_batiment()
     jeu.collision_bat()
     jeu.spawn_monstre()
-    jeu.debut_hist()
-    jeu.loot()
     jeu.suivie_monstres()
     jeu.attaque_monstre()
     jeu.degat_attaque()
     jeu.attaque_joueur()
+    jeu.loot()
+    jeu.ame_collector()
+    jeu.debut_hist()
     jeu.game_over()
+    jeu.winner()
+    #jeu.reset_world()  fonction pas à jour, variable manquante
     jeu.cheat_code()
 
     if jeu.arret_en_court:
@@ -633,6 +702,9 @@ while running:
             jeu.degat_frame_debug += 1
             jeu.coldown_attaque_joueur += 1
             start_time = curent_time
+
+    if jeu.reset:
+        pygame.mixer.music.stop()
 
     pygame.display.flip()
     clock.tick(60)
