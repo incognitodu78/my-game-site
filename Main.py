@@ -40,6 +40,10 @@ class Jeu:
         self.quitter = False
         self.arret_en_court = False
         self.reset = False
+        self.bloque_haut = False
+        self.bloque_bas = False
+        self.bloque_droite = False
+        self.bloque_gauche = False
 
         self.vitesse = 3
         self.x = -1360
@@ -71,6 +75,7 @@ class Jeu:
         self.pnj = pygame.image.load(resource_path("Assets/Image/PNJ 1.png"))
         self.btn_quitter = pygame.image.load(resource_path("Assets/Image/Bouton quitter.png"))
         self.btn_continuer = pygame.image.load(resource_path("Assets/Image/Bouton continuer.png"))
+        self.btn_parametre = pygame.image.load(resource_path("Assets/Image/btn paramètre.png"))
 
         self.son_degat_joueur = pygame.mixer.Sound(resource_path("Assets/Sons/pv joueur.wav"))
         self.son_gagnant = pygame.mixer.Sound(resource_path("Assets/Sons/winner.wav"))
@@ -176,7 +181,7 @@ class Jeu:
 
             if self.azerty:
 
-                if not self.sans_bordure and self.x < -403:
+                if not self.sans_bordure and self.x < -403 and not self.bloque_gauche:
                     if self.keys[pygame.K_q]:
                         self.x += self.vitesse
                         self.pos_joueur_x += self.vitesse
@@ -186,7 +191,7 @@ class Jeu:
                         self.x += self.vitesse
                         self.pos_joueur_x += self.vitesse
 
-                if not self.sans_bordure and self.x > -2390:
+                if not self.sans_bordure and self.x > -2390 and not self.bloque_droite:
                     if self.keys[pygame.K_d]:
                         self.x -= self.vitesse
                         self.pos_joueur_x -= self.vitesse
@@ -196,7 +201,7 @@ class Jeu:
                         self.x -= self.vitesse
                         self.pos_joueur_x -= self.vitesse
 
-                if not self.sans_bordure and self.y < -602:
+                if not self.sans_bordure and self.y < -602 and not self.bloque_haut:
                     if self.keys[pygame.K_z]:
                         self.y += self.vitesse
                         self.pos_joueur_y += self.vitesse
@@ -206,7 +211,7 @@ class Jeu:
                         self.y += self.vitesse
                         self.pos_joueur_y += self.vitesse
 
-                if not self.sans_bordure and self.y > -2550:
+                if not self.sans_bordure and self.y > -2550 and not self.bloque_bas:
                     if self.keys[pygame.K_s]:
                         self.y -= self.vitesse
                         self.pos_joueur_y -= self.vitesse
@@ -218,7 +223,7 @@ class Jeu:
 
 
             elif self.qwerty:
-                if not self.sans_bordure and self.x < -403:
+                if not self.sans_bordure and self.x < -403 and not self.bloque_gauche:
                     if self.keys[pygame.K_a]:
                         self.x += self.vitesse
                         self.pos_joueur_x += self.vitesse
@@ -228,7 +233,7 @@ class Jeu:
                         self.x += self.vitesse
                         self.pos_joueur_x += self.vitesse
 
-                if not self.sans_bordure and self.x > -2380:
+                if not self.sans_bordure and self.x > -2380 and not self.bloque_droite:
                     if self.keys[pygame.K_d]:
                         self.x -= self.vitesse
                         self.pos_joueur_x -= self.vitesse
@@ -238,7 +243,7 @@ class Jeu:
                         self.x -= self.vitesse
                         self.pos_joueur_x -= self.vitesse
 
-                if not self.sans_bordure and self.y < -533:
+                if not self.sans_bordure and self.y < -533 and not self.bloque_haut:
                     if self.keys[pygame.K_w]:
                         self.y += self.vitesse
                         self.pos_joueur_y += self.vitesse
@@ -248,7 +253,7 @@ class Jeu:
                         self.y += self.vitesse
                         self.pos_joueur_y += self.vitesse
 
-                if not self.sans_bordure and self.y > -2550:
+                if not self.sans_bordure and self.y > -2550 and not self.bloque_bas:
                     if self.keys[pygame.K_s]:
                         self.y -= self.vitesse
                         self.pos_joueur_y -= self.vitesse
@@ -310,10 +315,36 @@ class Jeu:
 
     def collision_bat(self):
         if self.enjeu and not self.quitter:
+            self.bloque_haut = False
+            self.bloque_bas = False
+            self.bloque_droite = False
+            self.bloque_gauche = False
+
             for i in range(len(self.positions_bat_x)):
-                self.hitbox_batiment.topleft = (self.positions_bat_x[i] - self.x, self.positions_bat_y[i] - self.y)
-            if self.hitbox_batiment.colliderect(self.hitbox_joueur):
-                print("bloque")
+
+                self.hitbox_batiment.topleft = (self.positions_bat_x[i] + self.x, self.positions_bat_y[i] + self.y)
+
+                dx_left = abs(self.hitbox_joueur.right - self.hitbox_batiment.left)
+                dx_right = abs(self.hitbox_joueur.left - self.hitbox_batiment.right)
+                dy_top = abs(self.hitbox_joueur.bottom - self.hitbox_batiment.top)
+                dy_bottom = abs(self.hitbox_joueur.top - self.hitbox_batiment.bottom)
+
+                min_collision = min(dx_left, dx_right, dy_top, dy_bottom)
+
+                if self.hitbox_batiment.colliderect(self.hitbox_joueur):
+
+                    if min_collision == dx_left:
+                        self.bloque_droite = True
+
+                    elif min_collision == dx_right:
+                        self.bloque_gauche = True
+
+                    elif min_collision == dy_top:
+                        self.bloque_bas = True
+
+                    elif min_collision == dy_bottom:
+                        self.bloque_haut = True
+
 
 
 
@@ -343,9 +374,10 @@ class Jeu:
 class Histoire(Jeu):
     def __init__(self):
         super().__init__() #permet d'appeler la classe parente
-        self.choix_lettre = "Press '->' to continue"
+        self.choix_lettre = "Press 'ENTER' to continue"
         self.info_texte = "Salutation voyageur"
         self.level_hist = 0
+        self.debug_click = 0
         self.hist_att = False
         self.fin_debut_hist = False
         self.hist_fin = False
@@ -366,9 +398,10 @@ class Histoire(Jeu):
                 self.canvas.blit(texte1, (1000, 50))
                 self.canvas.blit(self.ap_indic, (975, 20))
 
-                if self.keys[pygame.K_RETURN] and not self.histoire_start:
+                if self.keys[pygame.K_RETURN] and not self.histoire_start and self.debug_click >= 1:
                     self.discution_pnj = True
                     self.histoire_start = True
+                    self.debug_click = 0
 
             if self.histoire_start and not self.hist_fin:
                 texte2 = police_ecriture.render(self.info_texte, True, (255, 255, 255))
@@ -376,26 +409,31 @@ class Histoire(Jeu):
                 self.canvas.blit(self.ap_texte, (45, 500))
                 self.canvas.blit(texte1, (450, 505))
                 self.canvas.blit(texte2, (100, 585))
-                if self.keys[pygame.K_RIGHT] and self.level_hist == 0:
+                if self.keys[pygame.K_RETURN] and self.level_hist == 0 and self.debug_click >= 1:
                     self.info_texte = "Le village va mal"
-                    self.choix_lettre =  "Press '<-' to continue"
                     self.level_hist = 1
-                if self.keys[pygame.K_LEFT] and self.level_hist == 1:
+                    self.debug_click = 0
+                if self.keys[pygame.K_RETURN] and self.level_hist == 1 and self.debug_click >= 1:
                     self.info_texte = "Aide nous"
-                    self.choix_lettre = "Press '->' to continue"
                     self.level_hist = 2
-                if self.keys[pygame.K_RIGHT] and self.level_hist == 2:
-                    self.info_texte = "Tue 5 monstres et reviens me voir"
-                    self.choix_lettre =  "Press '<-' to finish"
+                    self.debug_click = 0
+                if self.keys[pygame.K_RETURN] and self.level_hist == 2 and self.debug_click >= 1:
+                    self.info_texte = "Ramène-moi 5 âme de slime ou plus"
                     self.level_hist = 3
-                if self.keys[pygame.K_LEFT] and self.level_hist == 3:
-                    self.choix_lettre = "Press '->' to continue"
+                    self.debug_click = 0
+                if self.keys[pygame.K_RETURN] and self.level_hist == 3 and self.debug_click >= 1:
+                    self.info_texte = "Cette épée te sera utile"
+                    self.choix_lettre =  "Press 'ENTER' to finish"
+                    self.level_hist = 4
+                    self.debug_click = 0
+                if self.keys[pygame.K_RETURN] and self.level_hist == 4 and self.debug_click >= 1:
                     self.info_texte = "Salutation voyageur"
                     self.histoire_start = False
                     self.hist_att = True
                     self.level_hist = 0
                     self.fin_debut_hist = True
                     self.discution_pnj = False
+                    self.debug_click = 0
 
             elif self.hist_fin:
                 if self.discution_pnj:
@@ -674,9 +712,9 @@ while running:
     jeu.deplacement()
     jeu.changer_ap()
     jeu.afficher_batiment()
+    jeu.suivie_monstres()
     jeu.collision_bat()
     jeu.spawn_monstre()
-    jeu.suivie_monstres()
     jeu.attaque_monstre()
     jeu.degat_attaque()
     jeu.attaque_joueur()
@@ -694,13 +732,14 @@ while running:
     if jeu.reboot:
         jeu.reset_world()
 
-    if jeu.hist_att and not jeu.quitter:
+    if jeu.enjeu and not jeu.quitter:
         curent_time = pygame.time.get_ticks()
         if curent_time - start_time >= 1000:
             jeu.temps += 1
             jeu.deplacement_attaque += 1
             jeu.degat_frame_debug += 1
             jeu.coldown_attaque_joueur += 1
+            jeu.debug_click += 1
             start_time = curent_time
 
     if jeu.reset:
