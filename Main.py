@@ -44,6 +44,8 @@ class Jeu:
         self.bloque_bas = False
         self.bloque_droite = False
         self.bloque_gauche = False
+        self.stop = False
+        self.cest_fini = False
 
         self.vitesse = 3
         self.x = -1360
@@ -75,7 +77,9 @@ class Jeu:
         self.pnj = pygame.image.load(resource_path("Assets/Image/PNJ 1.png"))
         self.btn_quitter = pygame.image.load(resource_path("Assets/Image/Bouton quitter.png"))
         self.btn_continuer = pygame.image.load(resource_path("Assets/Image/Bouton continuer.png"))
-        self.btn_parametre = pygame.image.load(resource_path("Assets/Image/btn paramètre.png"))
+        self.ap_pause = pygame.image.load(resource_path("Assets/Image/AP pause.png"))
+        self.ap_game_over = pygame.image.load(resource_path("Assets/Image/AP game over.png"))
+        self.ap_winner = pygame.image.load(resource_path("Assets/Image/AP win.png"))
 
         self.son_degat_joueur = pygame.mixer.Sound(resource_path("Assets/Sons/pv joueur.wav"))
         self.son_gagnant = pygame.mixer.Sound(resource_path("Assets/Sons/winner.wav"))
@@ -95,10 +99,10 @@ class Jeu:
         self.btn_qwerty_hitbox.topleft = (700, 250)
 
         self.btn_quitter_oui_hitbox = self.btn_quitter.get_rect()
-        self.btn_quitter_oui_hitbox.topleft = (400, 300)
+        self.btn_quitter_oui_hitbox.topleft = (400, 500)
 
         self.btn_quitter_non_hitbox = self.btn_continuer.get_rect()
-        self.btn_quitter_non_hitbox.topleft = (650, 300)
+        self.btn_quitter_non_hitbox.topleft = (650, 500)
 
         self.canvas = pygame.display.set_mode((1280, 720))
         self.canvas.blit(self.ap_lobby, (0, 0))
@@ -110,17 +114,23 @@ class Jeu:
         self.hitbox_joueur.topleft = (600, 400)
 
     def cliquer_bouton(self, event):
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
-                self.quitter = True
+        if self.cest_fini:
+            self.btn_quitter_oui_hitbox.topleft = (500, 500)
+            self.canvas.blit(self.btn_quitter, (500, 500))
+            if event.type == MOUSEBUTTONDOWN and event.button == 1:
+                if self.btn_quitter_oui_hitbox.collidepoint(event.pos):
+                    self.arret_en_court = True
+            return
 
-        if self.quitter:
-            police_ecriture = pygame.font.Font(None, 70)
-            texte = police_ecriture.render("Voulez-vous quitter ?", True, (255, 255, 255))
-            self.canvas.fill((0, 0, 0))
-            self.canvas.blit(texte, (400, 100))
-            self.canvas.blit(self.btn_quitter, (400, 300))
-            self.canvas.blit(self.btn_continuer, (650, 300))
+        if self.enjeu:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.quitter = True
+
+        if self.quitter and self.enjeu:
+            self.canvas.blit(self.ap_pause, (0,0))
+            self.canvas.blit(self.btn_quitter, (400, 500))
+            self.canvas.blit(self.btn_continuer, (650, 500))
 
             if event.type == MOUSEBUTTONDOWN and event.button == 1:
                 if self.btn_quitter_oui_hitbox.collidepoint(event.pos):
@@ -130,13 +140,13 @@ class Jeu:
 
             return
 
+
         if self.reset:
             if event.type == MOUSEBUTTONDOWN and event.button == 1:
                 if self.btn_quitter_oui_hitbox.collidepoint(event.pos):
                     self.arret_en_court = True
                 elif self.btn_quitter_non_hitbox.collidepoint(event.pos):
-                    pass
-                    # self.reboot = True    // activer ceci pour activer l'option de reset
+                    self.reboot = True
 
             return
 
@@ -153,20 +163,20 @@ class Jeu:
                             self.choix_utilisateur = True
 
             if self.choix_utilisateur and not self.enjeu:
-                    if event.type == MOUSEBUTTONDOWN:
-                        if event.button == 1:
-                            try:
-                                if self.btn_azerty_hitbox.collidepoint(event.pos):
-                                    self.azerty = True
-                                    self.qwerty = False
-                                if self.btn_qwerty_hitbox.collidepoint(event.pos):
-                                    self.azerty = False
-                                    self.qwerty = True
-                            except AttributeError:
-                                return
-                            finally:
-                                if self.azerty or self.qwerty:
-                                    self.enjeu = True
+                if event.type == MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        try:
+                            if self.btn_azerty_hitbox.collidepoint(event.pos):
+                                self.azerty = True
+                                self.qwerty = False
+                            if self.btn_qwerty_hitbox.collidepoint(event.pos):
+                                self.azerty = False
+                                self.qwerty = True
+                        except AttributeError:
+                            return
+                        finally:
+                            if self.azerty or self.qwerty:
+                                self.enjeu = True
 
 
     def changer_ap(self):
@@ -346,34 +356,31 @@ class Jeu:
                         self.bloque_haut = True
 
 
-
-
     def game_over(self):
-        data = pygame.font.Font(None, 100)
-        texte = data.render("GAME OVER", True, (255,255,255))
         if self.vie_joueur <= 0:
             self.enjeu = False
-            self.canvas.fill((0,0,0))
-            self.canvas.blit(texte, (400, 150))
-            self.canvas.blit(self.btn_quitter, (400, 300))
-            self.canvas.blit(self.btn_continuer, (650, 300))
+            self.canvas.blit(self.ap_game_over, (0, 0))
+            self.canvas.blit(self.btn_quitter, (400, 500))
+            self.canvas.blit(self.btn_continuer, (650, 500))
             if not self.reset:
                 self.son_game_over.play()
             self.reset = True
 
     def winner(self):
         if self.enjeu and not self.quitter and self.gagner:
-            data = pygame.font.Font(None, 300)
-            text = data.render("YOU WIN!", True, (255,255,255))
-            self.canvas.blit(text, (140, 290))
-            self.son_gagnant.play()
+            if not self.cest_fini:
+                self.son_gagnant.play()
+
+            self.cest_fini = True
             self.enjeu = False
+            self.canvas.blit(self.ap_winner, (0, 0))
+
 
 
 
 class Histoire(Jeu):
     def __init__(self):
-        super().__init__() #permet d'appeler la classe parente
+        super().__init__()
         self.choix_lettre = "Press 'ENTER' to continue"
         self.info_texte = "Salutation voyageur"
         self.level_hist = 0
@@ -390,7 +397,7 @@ class Histoire(Jeu):
         police_ecriture2 = pygame.font.Font(None, 38)
         texte1 = police_ecriture.render("PRESS 'ENTER'", True, (255,255,255))
 
-        if not self.quitter:
+        if not self.quitter and not self.cest_fini:
             self.canvas.blit(self.pnj, (2150 + self.x, 1925 + self.y))
 
         if self.enjeu and not self.quitter:
@@ -466,6 +473,9 @@ class Monstres(Histoire):
         self.vie_monstre = [100, 100, 100, 100, 100, 100]
         self.monstre_dead = []
 
+        self.reset_monstre_spawn_x = []
+        self.reset_monstre_spawn_y = []
+
         self.hitbox_monstre = self.monstre_droite.get_rect()
 
         self.hitbox_attaque_monstre_gauche = self.att_monstre.get_rect()
@@ -474,7 +484,7 @@ class Monstres(Histoire):
         self.hitbox_attaque_monstre_haut = self.att_monstre.get_rect()
 
     def spawn_monstre(self):
-        if self.enjeu and not self.quitter:
+        if self.enjeu and not self.quitter and not self.reset:
             if self.spawn_mob:
                 for x in range(0, 6):
                     aleatoire_x = random.randint(1000, 2850)
@@ -482,6 +492,8 @@ class Monstres(Histoire):
                     self.positions_mob_x.append(aleatoire_x)
                     self.positions_mob_y.append(aleatoire_y)
                 self.spawn_mob = False
+                self.reset_monstre_spawn_x = self.positions_mob_x.copy()
+                self.reset_monstre_spawn_y = self.positions_mob_y.copy()
             for i in range(len(self.positions_mob_x)):
                 self.canvas.blit(self.monstre, (self.positions_mob_x[i] + self.x,
                                                  self.positions_mob_y[i] + self.y))
@@ -494,7 +506,7 @@ class Monstres(Histoire):
             if  5 <= self.temps < 7 and not self.quitter:
                 self.positions_mob_x = [x -3 for x in self.positions_mob_x]
                 self.monstre = self.monstre_gauche
-            if self.temps == 9 and not self.quitter:
+            if self.temps >= 9 and not self.quitter:
                 self.temps = 1
 
     def attaque_monstre(self):
@@ -594,7 +606,7 @@ class Monstres(Histoire):
     def attaque_joueur(self):
         pos_joueur_x = 600 - self.x
         pos_joueur_y = 400 - self.y
-        if self.hist_att and not self.quitter:
+        if self.hist_att and not self.quitter and not self.cest_fini:
 
             for x in range(len(self.positions_mob_x)):
                 self.canvas.fill((186, 0, 0), (self.positions_mob_x[x] + 5 + self.x,
@@ -638,7 +650,7 @@ class Monstres(Histoire):
         chiffre = len(self.monstre_dead)
         data = pygame.font.Font(None, 35)
         text = data.render(str(chiffre), False, (0, 0, 0))
-        if self.enjeu and not self.quitter and not self.gagner:
+        if self.enjeu and not self.quitter and not self.gagner and not self.discution_pnj:
             if len(self.monstre_dead) > 0:
                 self.canvas.blit(self.ame_monstre, (855, 600))
                 self.canvas.blit(text, (910, 650))
@@ -647,7 +659,8 @@ class Monstres(Histoire):
                 self.hist_fin = True
 
             if self.fin_debut_hist and not self.gagner:
-                self.canvas.blit(self.arme, (715, 610))
+                if not self.discution_pnj:
+                    self.canvas.blit(self.arme, (715, 610))
                 if self.joueur == self.joueur_droite:
                     self.canvas.blit(arme, (620, 420))
                 if self.joueur == self.joueur_gauche:
@@ -659,6 +672,10 @@ class Monstres(Histoire):
 
 
     def reset_world(self):
+        pygame.mixer.music.load(resource_path("Assets/Sons/Ap musique.mp3"))
+        pygame.mixer.music.set_volume(0.2)
+        pygame.mixer.music.play(-1)
+
         self.reset = False
         self.reboot = False
         self.enjeu = True
@@ -666,6 +683,8 @@ class Monstres(Histoire):
         self.histoire_start = False
         self.quitter = False
         self.arret_en_court = False
+        self.fin_debut_hist = False
+        self.hist_fin = False
 
         self.joueur = self.joueur_derriere
 
@@ -679,8 +698,13 @@ class Monstres(Histoire):
 
         self.positions_bat_x = [2200, 1450, 1650, 2150, 2400, 1700]
         self.positions_bat_y = [2000, 1800, 1500, 1700, 1800, 2000]
+        self.vie_monstre = [100, 100, 100, 100, 100, 100]
+        self.monstre_dead = []
 
-        self.choix_lettre = "Press '->' to continue"
+        self.positions_mob_x = self.reset_monstre_spawn_x.copy()
+        self.positions_mob_y = self.reset_monstre_spawn_y.copy()
+
+        self.choix_lettre = "Press 'ENTER' to continue"
         self.info_texte = "Salutation voyageur"
         self.level_hist = 0
         self.hist_att = False
@@ -697,6 +721,7 @@ class Monstres(Histoire):
         self.deplacement_attaque = 0
         self.direction_att = 0
         self.degat_frame_debug = 0
+        self.ame_collecte = 0
 
 
 start_time = pygame.time.get_ticks()
@@ -709,28 +734,29 @@ while running:
             running = False
 
         jeu.cliquer_bouton(event)
-    jeu.deplacement()
-    jeu.changer_ap()
-    jeu.afficher_batiment()
-    jeu.suivie_monstres()
-    jeu.collision_bat()
-    jeu.spawn_monstre()
-    jeu.attaque_monstre()
-    jeu.degat_attaque()
-    jeu.attaque_joueur()
-    jeu.loot()
-    jeu.ame_collector()
-    jeu.debut_hist()
-    jeu.game_over()
-    jeu.winner()
-    #jeu.reset_world()  fonction pas à jour, variable manquante
-    jeu.cheat_code()
-
-    if jeu.arret_en_court:
-        running = False
 
     if jeu.reboot:
         jeu.reset_world()
+
+    jeu.deplacement()
+    jeu.changer_ap()
+    jeu.afficher_batiment()
+    jeu.collision_bat()
+    jeu.spawn_monstre()
+    jeu.suivie_monstres()
+    jeu.attaque_monstre()
+    jeu.degat_attaque()
+    jeu.attaque_joueur()
+    jeu.debut_hist()
+    jeu.loot()
+    jeu.ame_collector()
+    jeu.game_over()
+    jeu.winner()
+    jeu.cheat_code()
+
+    if jeu.arret_en_court or jeu.stop:
+        running = False
+
 
     if jeu.enjeu and not jeu.quitter:
         curent_time = pygame.time.get_ticks()
