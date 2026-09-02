@@ -44,18 +44,27 @@ body {
     transform: scale(1.05);
 }
 
-/* Images */
 img {
     margin: 10px;
     border-radius: 10px;
-
     box-shadow: 0 0 15px rgba(0,0,0,0.4);
+}
 
+/* Conteneur qui place l'image à droite */
 .right_img {
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    height: 100vh;
+    height: auto; /* tu peux mettre 100vh si tu veux centrer verticalement */
+}
+
+/* Taille de l'image */
+.small_img {
+    width: 100px;
+    height: 100px;
+}
+
+    
 }
 }
 
@@ -83,7 +92,10 @@ La vie du joueur baisse tout le temps sans se faire attaquer // Les monstres ne 
 
 <h4>Aperçu du jeu :</h4>
 
-<img src="credit.png" alt="credit : Incognitodu78", class="right_img">
+<div class="right_img">
+    <img src="credit.png" alt="credit : Incognitodu78" class="small_img">
+</div>
+
 <img src="présentation lobby.png" alt="Le lobby" width="300">
 <img src="pp spawn.png" alt="Le spawn" width="300"><br><br>
 
